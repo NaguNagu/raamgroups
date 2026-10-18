@@ -1,0 +1,14 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    { "collectionGroup": "assets", "fieldPath": "body", "indexes": [] },
+    {
+      "collectionGroup": "products",
+      "fieldPath": "description",
+      "indexes": []
+    },
+    { "collectionGroup": "private", "fieldPath": "settings", "indexes": [] },
+    { "collectionGroup": "bills", "fieldPath": "items", "indexes": [] },
+    { "collectionGroup": "bills", "fieldPath": "business", "indexes": [] }
+  ]
+}

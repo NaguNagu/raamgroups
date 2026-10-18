@@ -1,0 +1,17 @@
+node_modules/
+.next/
+.env*
+!.env.example
+.vercel/
+*.tsbuildinfo
+test-results/
+.vercel
+
+.firebase/
+*-debug.log
+.firebase-audit.md
+
+# Private operational inputs and notes; keep them out of public source.
+data/inventory-source.json
+lib/inventory.ts
+FIREBASE-HANDOVER.md
