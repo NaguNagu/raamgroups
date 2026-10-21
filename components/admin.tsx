@@ -50,7 +50,12 @@ import {
   type Bill,
   type Settings,
 } from "@/lib/domain";
-import { productSchema, billSchema, settingsSchema } from "@/lib/validation";
+import {
+  productSchema,
+  billSchema,
+  settingsSchema,
+  saveError,
+} from "@/lib/validation";
 import { Brand } from "./shop";
 import { Drawer, Empty } from "./ui";
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -221,7 +226,7 @@ export function Admin({ demo = false }: { demo?: boolean }) {
       );
       return { ok: true, result };
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unable to save.");
+      setError(saveError(e));
       return { ok: false };
     } finally {
       setBusy(false);
@@ -901,26 +906,41 @@ function ProductForm({
 }) {
   const [image, setImage] = useState(p.image);
   const [error, setError] = useState("");
+  const [unit, setUnit] = useState(p.unit);
+  const [active, setActive] = useState(p.active && p.unit !== "unconfirmed");
+  const [processingImage, setProcessingImage] = useState(false);
   return (
     <form
       className="drawer-body form-stack"
       onSubmit={(e) => {
         e.preventDefault();
         const d = Object.fromEntries(new FormData(e.currentTarget));
-        onSave({
+        if (processingImage) return;
+        const result = productSchema.safeParse({
           ...p,
           name: String(d.name),
           description: String(d.description),
           category: String(d.category),
-          unit: String(d.unit),
+          unit,
           price: Math.round(Number(d.price) * 100),
           stock: Number(d.stock),
           gst: Number(d.gst),
           hsn: String(d.hsn),
-          active: d.active === "on",
+          active,
+          showPrice: d.showPrice === "on",
           sample: d.sample === "on",
           image,
         });
+        if (!result.success) {
+          setError(saveError(result.error));
+          const field = e.currentTarget.elements.namedItem(
+            String(result.error.issues[0]?.path[0]),
+          );
+          if (field instanceof HTMLElement) field.focus();
+          return;
+        }
+        setError("");
+        onSave(result.data);
       }}
     >
       {p.importNote && <p className="help-text">{p.importNote}</p>}
@@ -959,9 +979,18 @@ function ProductForm({
         </label>
         <label>
           Unit
-          <select name="unit" defaultValue={p.unit}>
+          <select
+            name="unit"
+            value={unit}
+            onChange={(e) => {
+              setUnit(e.target.value);
+              if (e.target.value === "unconfirmed") setActive(false);
+            }}
+          >
             {productUnits.map((x) => (
-              <option key={x}>{x}</option>
+              <option key={x} value={x}>
+                {x === "unconfirmed" ? "Choose unit…" : x}
+              </option>
             ))}
           </select>
         </label>
@@ -997,18 +1026,23 @@ function ProductForm({
           type="file"
           accept="image/png,image/jpeg,image/webp"
           onChange={async (e) => {
+            setProcessingImage(true);
             try {
               if (e.target.files?.[0])
                 setImage(await readImage(e.target.files[0]));
               setError("");
             } catch (e) {
               setError((e as Error).message);
+            } finally {
+              setProcessingImage(false);
             }
           }}
         />
         <small>JPG, PNG or WebP, up to 8 MB. Optimized automatically.</small>
       </label>
-      {image.startsWith("data:") && (
+      {(image.startsWith("data:") ||
+        image.startsWith("/") ||
+        image.startsWith("https://")) && (
         <img
           className="upload-preview"
           src={image}
@@ -1016,16 +1050,48 @@ function ProductForm({
         />
       )}
       <label className="check-label">
-        <input type="checkbox" name="active" defaultChecked={p.active} />
+        <input
+          type="checkbox"
+          name="active"
+          checked={active}
+          disabled={unit === "unconfirmed"}
+          onChange={(e) => setActive(e.target.checked)}
+        />
         Show in storefront
       </label>
+      {unit === "unconfirmed" && (
+        <p className="help-text" role="status">
+          Choose the selling unit above to publish this item. You can save its
+          photo and details now as a hidden draft.
+        </p>
+      )}
+      <label className="check-label">
+        <input
+          type="checkbox"
+          name="showPrice"
+          defaultChecked={p.showPrice !== false}
+        />
+        Show price in storefront
+      </label>
+      <p className="help-text">
+        Switch off to show “Price on enquiry” in the store and cart. Your
+        selling price stays available for billing.
+      </p>
       <label className="check-label">
         <input type="checkbox" name="sample" defaultChecked={p.sample} />
-        Indicative catalogue item (price & stock on enquiry)
+        Confirm stock availability on enquiry
       </label>
-      {error && <p className="error">{error}</p>}
-      <button className="btn primary full" disabled={busy}>
-        Save product
+      {error && (
+        <p className="error" role="alert">
+          {error}
+        </p>
+      )}
+      <button className="btn primary full" disabled={busy || processingImage}>
+        {processingImage
+          ? "Preparing photo…"
+          : busy
+            ? "Saving…"
+            : "Save product"}
       </button>
     </form>
   );

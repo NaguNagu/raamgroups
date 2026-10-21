@@ -34,6 +34,7 @@ export const productSchema = z
       ),
     active: z.boolean(),
     sample: z.boolean().optional(),
+    showPrice: z.boolean().optional(),
     importNote: z.string().max(1000).optional(),
   })
   .refine((p) => !p.active || p.unit !== "unconfirmed", {
@@ -97,3 +98,13 @@ export const enquirySchema = z.object({
   phone: z.string().regex(/^[6-9]\d{9}$/),
   message: z.string().trim().min(5).max(4000),
 });
+
+export function saveError(error: unknown): string {
+  if (error instanceof z.ZodError) {
+    const issue = error.issues[0];
+    return issue
+      ? `${issue.path.join(" → ") || "Product"}: ${issue.message}`
+      : "Please check the form.";
+  }
+  return error instanceof Error ? error.message : "Unable to save.";
+}

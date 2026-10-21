@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useShop, ProductCard } from "./shop";
 import { ProductImage } from "./ui";
-import { money } from "@/lib/domain";
+import { money, storefrontPrice } from "@/lib/domain";
 export function ProductDetail({ id }: { id: string }) {
   const { products, add } = useShop();
   const p = products.find((p) => p.id === id);
@@ -25,7 +25,9 @@ export function ProductDetail({ id }: { id: string }) {
           <h1>{p.name}</h1>
           <p>{p.description}</p>
           <h3>
-            {p.price ? `${money(p.price)} / ${p.unit}` : "Price on enquiry"}
+            {storefrontPrice(p)
+              ? `${money(storefrontPrice(p))} / ${p.unit}`
+              : "Price on enquiry"}
           </h3>
           <p className="muted small">
             {p.sample
@@ -33,7 +35,7 @@ export function ProductDetail({ id }: { id: string }) {
               : p.stock > 0
                 ? `${p.stock} ${p.unit} available`
                 : "Currently out of stock"}
-            {p.price > 0
+            {storefrontPrice(p) > 0
               ? " · GST and delivery confirmed with your order."
               : ""}
           </p>

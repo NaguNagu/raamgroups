@@ -25,6 +25,7 @@ import {
 import {
   initialStore,
   money,
+  storefrontPrice,
   whatsappMessage,
   type Product,
   type Settings,
@@ -181,7 +182,10 @@ export function CartDrawer() {
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [sending, setSending] = useState(false);
-  const knownTotal = cart.reduce((s, i) => s + i.product.price * i.quantity, 0);
+  const knownTotal = cart.reduce(
+    (s, i) => s + storefrontPrice(i.product) * i.quantity,
+    0,
+  );
   const update = (id: string, n: number) =>
     setCart((c) =>
       c.flatMap((i) =>
@@ -236,8 +240,8 @@ export function CartDrawer() {
                 <div>
                   <strong>{p.name}</strong>
                   <small>
-                    {p.price
-                      ? `${money(p.price)} / ${p.unit}`
+                    {storefrontPrice(p)
+                      ? `${money(storefrontPrice(p))} / ${p.unit}`
                       : "Price on enquiry"}
                   </small>
                   <div className="quantity">
@@ -354,9 +358,9 @@ export function ProductCard({ product: p }: { product: Product }) {
         </Link>
         <div className="product-bottom">
           <span>
-            {p.price ? (
+            {storefrontPrice(p) ? (
               <>
-                <strong>{money(p.price)}</strong>
+                <strong>{money(storefrontPrice(p))}</strong>
                 <small> / {p.unit}</small>
               </>
             ) : (

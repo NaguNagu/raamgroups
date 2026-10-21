@@ -11,7 +11,13 @@ import {
   setDoc,
 } from "firebase/firestore/lite";
 import { firestore } from "./firebase-server";
-import { initialStore, type Store, type Product, type Enquiry } from "./domain";
+import {
+  initialStore,
+  storefrontProduct,
+  type Store,
+  type Product,
+  type Enquiry,
+} from "./domain";
 export { initialStore };
 function plain<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
@@ -59,11 +65,13 @@ export async function readCatalogue() {
   ]);
   if (!settings.exists())
     return {
-      products: initialStore.products.filter((p) => p.active),
+      products: initialStore.products
+        .filter((p) => p.active)
+        .map(storefrontProduct),
       settings: initialStore.settings,
     };
   return {
-    products: products.docs.map(data) as Product[],
+    products: (products.docs.map(data) as Product[]).map(storefrontProduct),
     settings: settings.data() as Store["settings"],
   };
 }

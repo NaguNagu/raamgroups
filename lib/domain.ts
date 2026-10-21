@@ -12,8 +12,15 @@ export type Product = {
   image: string;
   active: boolean;
   sample?: boolean;
+  showPrice?: boolean;
   importNote?: string;
 };
+export function storefrontPrice(product: Product): number {
+  return product.showPrice === false ? 0 : product.price;
+}
+export function storefrontProduct(product: Product): Product {
+  return { ...product, price: storefrontPrice(product) };
+}
 export type Line = {
   productId?: string;
   name: string;
@@ -130,7 +137,7 @@ export function whatsappMessage(
   phone: string,
   items: { product: Product; quantity: number }[],
 ) {
-  return `Hello Sri Raam Rope Merchants, I would like to order:\n\n${items.map((i, n) => `${n + 1}. ${i.product.name} — ${i.quantity} ${i.product.unit}${i.product.price ? ` × ${money(i.product.price)}` : ""}`).join("\n")}\n\nCustomer: ${name}\nPhone: ${phone}\nPlease confirm price, stock, GST and delivery charges before confirming my order.`;
+  return `Hello Sri Raam Rope Merchants, I would like to order:\n\n${items.map((i, n) => `${n + 1}. ${i.product.name} — ${i.quantity} ${i.product.unit}${storefrontPrice(i.product) ? ` × ${money(storefrontPrice(i.product))}` : ""}`).join("\n")}\n\nCustomer: ${name}\nPhone: ${phone}\nPlease confirm price, stock, GST and delivery charges before confirming my order.`;
 }
 export const initialStore: Store = {
   sequence: 0,

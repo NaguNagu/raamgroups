@@ -7,7 +7,12 @@ import {
   saveImageAsset,
 } from "@/lib/db";
 import { recordBill } from "@/lib/domain";
-import { productSchema, billSchema, settingsSchema } from "@/lib/validation";
+import {
+  productSchema,
+  billSchema,
+  settingsSchema,
+  saveError,
+} from "@/lib/validation";
 import { firebaseConfigured } from "@/lib/firebase-config";
 export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
@@ -80,9 +85,6 @@ export async function POST(req: NextRequest) {
     });
     return NextResponse.json({ result, store: await readStore() });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unable to save." },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: saveError(error) }, { status: 400 });
   }
 }
